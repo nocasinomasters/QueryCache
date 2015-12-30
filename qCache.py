@@ -16,9 +16,9 @@ class qCache:
     def check_cache_object(objectName):
         return objectName in qCache.myTable
 
-    def set_cache_object(objectName, object):
+    def set_cache_object(objectName, objectValue):
         qCache.myTable["url"] = objectName
-        qCache.myTable["attribute"] = object
+        qCache.myTable["attribute"] = objectValue
 
     def get_cache_object(objectName):
         return qCache.myTable.get(objectName)
