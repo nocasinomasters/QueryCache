@@ -6,14 +6,14 @@ import socket
 import threading
 from qUtils import qUtils
 
-CRETURN='\r\n'
-
 def build_response(version,status_code,resp_phrase,content_type,html_file):
   with open(html_file) as f:
     content = f.read()
 
   content_len=str(len(content))
   date = formatdate(timeval=None, localtime=False, usegmt=True)
+
+  CRETURN='\r\n'
   response = version + ' ' + status_code + ' ' + ' ' + resp_phrase + CRETURN + \
              "Date:" + date + CRETURN + \
              "Content-Type:" + content_type + CRETURN + \
