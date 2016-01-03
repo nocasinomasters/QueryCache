@@ -3,17 +3,10 @@ from DDGURLParser import DDGURLParser
 import urllib
 import urllib2
 import socket
+import threading
+from qUtils import qUtils
 
-HOSTNAME='127.0.0.1'
-PORT = 8080
 CRETURN='\r\n'
-
-def setup_proxy_server():
-  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
-  s.bind((HOSTNAME,PORT))
-  s.listen(5)
-  return s
 
 def build_response(version,status_code,resp_phrase,content_type,html_file):
   with open(html_file) as f:
@@ -37,11 +30,11 @@ def parse_request_for_query(request):      # GET /?query=xxx HTTP/1.1\r\n Host: 
   req_query = req_resource.split(' ')[1]     #/?query=xxx
   search_query = req_query[len("/?query="):] #xxx
 
-  #doesn't handle + character right now
-  #urldecoded_query = urllib.unquote(search_query).decode('utf8')
-  #search_query_plain = urllib.unquote_plus(urldecoded_query)
-  #print search_query
-  #print search_query_plain
+ #doesn't handle + character right now
+ #urldecoded_query = urllib.unquote(search_query).decode('utf8')
+ #search_query_plain = urllib.unquote_plus(urldecoded_query)
+ #print search_query
+ #print search_query_plain
 
   return search_query
 
@@ -56,30 +49,56 @@ def parse_results_for_urls(results):
   p = DDGURLParser()
   p.feed(results)
   p.close()
-#  print p.data
+  #print p.data
   return  [x.strip() for x in p.data ]
 
 def build_standard_response():
   return build_response("HTTP/1.0","200","OK","text/html","index.html")
 
-s = setup_proxy_server()
 
-while True:
-  conn,addr = s.accept()
-  request = conn.recv(8192)
+class qProxyThread(threading.Thread):
 
-  search_query = parse_request_for_query(request)
+ def __init__(self, threadID):
+   threading.Thread.__init__(self)
+   self.threadID = threadID
 
-  search_results = execute_search(search_query) 
+ def setup_proxy_server(self):
+   return qUtils.open_listener_socket(qUtils.PROX_PORT)
 
-  url_list = parse_results_for_urls(search_results)
+ def run(self):
+   print 'starting proxy server thread'
+   s = self.setup_proxy_server()
+   while True:
+     conn,addr = s.accept()
+     request = conn.recv(8192)
 
-  print url_list
+     #print request
+
+     # this is the intended way to shut down the proxy thread,
+     # the manager will connect and send a !KILLPROXY message
+     if request.startswith("!KILLPROXY"):
+       conn.close()
+       return
+
+     search_query = parse_request_for_query(request)
+
+     # this is just temporary workaround to kill the program from the browser
+     # until the manager can send real !KILLPROXY commands
+     if "KILLPROXY" in search_query:
+       conn.close()
+       return
+
+     search_results = execute_search(search_query) 
+     url_list = parse_results_for_urls(search_results)
+
+     print url_list
   
-  senddata = build_standard_response()
+     senddata = build_standard_response()
+     conn.sendall(senddata)
+     conn.close()
 
-  conn.sendall(senddata)
-  conn.close()
-
-
+if __name__ == '__main__':
+  pThread = qProxyThread(1)
+  pThread.start()
+  #print 'made it here'
 
