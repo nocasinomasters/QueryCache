@@ -1,11 +1,26 @@
-#gathers objects from the web
-class qFetcher:
-  def getObjectFromWeb(objectName):
-    #open socket to retrieve objectName (a URL?) from the web
-    pass
+import socket
+import threading
+import urllib2
 
-  def getObjectsFromWeb(objectList)
-    #spawn threads, each thread calls getObjectFromWeb on one object in objectList
-    pass
+#gathers objects from the web
+class qFetcherThread(threading.Thread):
+
+ def __init__(self,threadID, url):
+   threading.Thread.__init__(self)
+   self.threadID = threadID
+   self.url_to_fetch = url
+   self.webdata = ""
+
+ def run(self):
+   # change this to only fetch when an internal QueryCache message is received
+   response = urllib2.urlopen(self.url_to_fetch)
+   self.webdata = response.read() 
+
+if __name__=='__main__':
+  qThread = qFetcherThread(2,"http://yahoo.com")
+  qThread.start()
+  qThread.join()
+  print qThread.webdata
+   
 
 

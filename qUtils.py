@@ -30,7 +30,7 @@ class qUtils():
     try:
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       s.connect((qUtils.HOSTNAME,port))
-      s.send(message)
+      s.sendall(message)
       s.close()
     except socket.error as serr:
       print str(serr) + ', try again later'
@@ -81,4 +81,9 @@ class qUtils():
   @staticmethod
   def build_standard_response():
     return qUtils.build_response("HTTP/1.0","200","OK","text/html","index.html")
+
+  @staticmethod
+  def build_http_request(url):
+    return
+
 
