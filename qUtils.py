@@ -1,9 +1,10 @@
+from email.utils import formatdate
 import socket
 
 
 #for helpers that don't belong anywhere
 
-class qUtils(object):
+class qUtils():
 
   HOSTNAME='127.0.0.1'
   MGR_PORT = 7777
@@ -59,4 +60,25 @@ class qUtils(object):
     if port < qUtils.MGR_PORT or port > qUtils.CACHE_PORT:
       raise ValueError('port %r is out of range, choose 7777-7780')
 
+  @staticmethod
+  def build_response(version,status_code,resp_phrase,content_type,html_file):
+    with open(html_file) as f:
+      content = f.read()
+
+    content_len=str(len(content))
+    date = formatdate(timeval=None, localtime=False, usegmt=True)
+
+    CRETURN='\r\n'
+    response = version + ' ' + status_code + ' ' + ' ' + resp_phrase + CRETURN + \
+                     "Date:" + date + CRETURN + \
+                     "Content-Type:" + content_type + CRETURN + \
+                     "Content-Length:" + content_len + CRETURN + \
+                     CRETURN + \
+                     CRETURN + \
+                     content
+    return response
+
+  @staticmethod
+  def build_standard_response():
+    return qUtils.build_response("HTTP/1.0","200","OK","text/html","index.html")
 
