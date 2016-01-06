@@ -32,7 +32,7 @@ class qCache:
         self.myTable.clear()
 
     sman = setup_cache()
-    print('lala')
+    
     while True:
         conn, conn_info = sman.accept()
         request = conn.recv(1024)
