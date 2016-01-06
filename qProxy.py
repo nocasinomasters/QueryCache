@@ -4,7 +4,7 @@ import urllib2
 import socket
 import threading
 from qUtils import qUtils
-
+import cPickle
 class qProxyThread(threading.Thread):
 
  def __init__(self, threadID):
@@ -12,7 +12,7 @@ class qProxyThread(threading.Thread):
    self.threadID = threadID
 
  def setup_proxy_server(self):
-   return qUtils.open_listener(qUtils.PROX_PORT)
+   return qUtils.open_listener(qUtils.BROWSER_PORT)
 
  @staticmethod
  def parse_request_for_query(request):      # GET /?query=xxx HTTP/1.1\r\n Host: xxx User-Agent: xxx...
@@ -69,14 +69,18 @@ class qProxyThread(threading.Thread):
      search_results = self.execute_search(search_query) 
      url_list = self.parse_results_for_urls(search_results)
 
-     print url_list
+     print 'TOOOOTTTTOO %s'%url_list
   
      senddata = qUtils.build_standard_response()
      conn.sendall(senddata)
+     if url_list != [] : 
+     	qUtils.send_message(cPickle.dumps(url_list),qUtils.MGR_PORT)
+     	print 'SEND to MGR'
+     	data = cPickle.loads(qUtils.recv_message(qUtils.PROX_PORT)) 
+     	print 'RECV %s'%data
      conn.close()
 
 if __name__ == '__main__':
   pThread = qProxyThread(1)
   pThread.start()
   #print 'made it here'
-
