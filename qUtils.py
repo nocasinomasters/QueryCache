@@ -7,8 +7,9 @@ import socket
 class qUtils():
 
   HOSTNAME='127.0.0.1'
+  PROX_PORT = 7776
   MGR_PORT = 7777
-  PROX_PORT = 7778
+  BROWSER_PORT = 7778
   FETCH_PORT = 7779
   CACHE_PORT = 7780
 
@@ -32,6 +33,7 @@ class qUtils():
       s.connect((qUtils.HOSTNAME,port))
       s.sendall(message)
       s.close()
+      print 'CLOSE SEND'
     except socket.error as serr:
       print str(serr) + ', try again later'
 
@@ -52,12 +54,13 @@ class qUtils():
       data += newData
 
     conn.close()
+    print 'CLOOSSEE RECV'
 #    print data
     return data
 
   @staticmethod
   def check_port(port):
-    if port < qUtils.MGR_PORT or port > qUtils.CACHE_PORT:
+    if port < qUtils.PROX_PORT or port > qUtils.CACHE_PORT:
       raise ValueError('port %r is out of range, choose 7777-7780')
 
   @staticmethod
@@ -85,5 +88,3 @@ class qUtils():
   @staticmethod
   def build_http_request(url):
     return
-
-
