@@ -64,6 +64,10 @@ class qFetcherThread(threading.Thread):
 
  # change this to only fetch when an internal QueryCache message is received
  def run(self):
+
+   self.url_to_fetch = qUtils.recv_message(qUtils.CACHE_PORT)
+   print 'cache request for url: ' + self.url_to_fetch
+
    saved_page_dir = 'cache/' + filter(str.isalnum, str(self.url_to_fetch))
    try:
      os.mkdir(saved_page_dir)
@@ -87,6 +91,8 @@ class qFetcherThread(threading.Thread):
    #self.fetch_css_and_js()
    #self.rewrite_links()
 
+   print 'sending the cache a local file at ' + saved_page_dir + '/index.html'
+   qUtils.send_message(saved_page_dir+'/index.html', qUtils.CACHE_PORT)
 
 if __name__=='__main__':
   qThread = qFetcherThread(2,"http://www.website.com/")
