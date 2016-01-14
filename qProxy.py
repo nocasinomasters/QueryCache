@@ -68,7 +68,7 @@ class qProxyThread(threading.Thread):
        return
 
      search_results = self.execute_search(search_query) 
-     url_list_tmp = self.parse_results_for_urls(search_results)
+     url_list_tmp = list(set(self.parse_results_for_urls(search_results)))
      url_list = []
      for i in range (0,len(url_list_tmp)) : 
      	if i == 10 : break
