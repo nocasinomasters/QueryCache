@@ -10,11 +10,11 @@ import time
 
 class qProxyManager(threading.Thread):
 
- def __init__(self, threadID,query):
+ def __init__(self, threadID,query, threadLock):
    threading.Thread.__init__(self)
    self.threadID = threadID
    self.search_query= query
-
+   self.threadLock = threadLock
  @staticmethod
  def execute_search(query):
    #only ddg has non-js for now
@@ -43,12 +43,15 @@ class qProxyManager(threading.Thread):
    print 'LIST %s'%url_list
 
    if url_list != [] :
+     self.threadLock.acquire()
      qUtils.send_message(cPickle.dumps(url_list),qUtils.MGR_PORT)
      print 'SEND to MGR'
      data = cPickle.loads(qUtils.recv_message(qUtils.PROX_PORT))
      print 'RECV %s'%data
+     self.threadLock.release()
 
 if __name__ == '__main__':
+  threadLock = threading.Lock()
   search_query = ' '
   s = qUtils.open_listener(qUtils.BROWSER_PORT)
   def parse_request_for_query(request):      # GET /?query=xxx HTTP/1.1\r\n Host: xxx User-Agent: xxx...
@@ -71,7 +74,7 @@ if __name__ == '__main__':
       qUtils.send_message("!KILLPROXY", qUtils.MGR_PORT)
       break
 
-    pThread = qProxyManager(1,search_query)
+    pThread = qProxyManager(1,search_query,threadLock)
     pThread.start()
     ###pThread.join()
   conn.close()

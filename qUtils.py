@@ -26,8 +26,9 @@ class qUtils():
 
   @staticmethod
   def send_message(message, port):
+    #lock = threading.Lock()
+    #lock.acquire()
     qUtils.check_port(port)
-
     try:
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       s.connect((qUtils.HOSTNAME,port))
@@ -36,28 +37,34 @@ class qUtils():
       print 'CLOSE SEND'
     except socket.error as serr:
       print str(serr) + ', try again later'
-
+    finally:
+      pass
+      # lock.release() # release lock, no matter what
   #blocks because of accept; waiting until someone connects
   @staticmethod
   def recv_message(port):
+    #lock = threading.Lock()
+    #lock.acquire()
     qUtils.check_port(port)
-
-    s = qUtils.open_listener(port)
-    conn, conn_info = s.accept()
     data = ''
+    try:
+      s = qUtils.open_listener(port)
+      conn, conn_info = s.accept()
 
-    while True:
-      newData = conn.recv(1024)
-      if not newData:
-        break
+      while True:
+        newData = conn.recv(1024)
+        if not newData:
+          break
 
-      data += newData
+        data += newData
 
-    conn.close()
-    print 'CLOOSSEE RECV'
-#    print data
-    return data
-
+      conn.close()
+      print 'CLOOSSEE RECV'
+    finally:
+     # lock.release() # release lock, no matter what
+      #print data
+      return data
+    
   @staticmethod
   def check_port(port):
     if port < qUtils.PROX_PORT or port > qUtils.CACHE_PORT:
