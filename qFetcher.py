@@ -18,6 +18,7 @@ class qFetcherThread(threading.Thread):
    self.headers = {"User-Agent" : \
      "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"}
    self.mainpage = ""
+   self.saved_page_dir = ""
 
  def fetch_css_and_js(self):
    resource_files = []
@@ -34,7 +35,7 @@ class qFetcherThread(threading.Thread):
      script_url = self.url_to_fetch + resource_rel_url
      script_data = urllib2.urlopen(script_url).read()
      rel_file_path = os.path.basename(resource_rel_url).split('?')[0]
-     file_path = saved_page_dir + '/'  + rel_file_path
+     file_path = self.saved_page_dir + '/'  + rel_file_path
 
      with open(file_path, 'w') as f:
        f.write(script_data)
@@ -50,7 +51,7 @@ class qFetcherThread(threading.Thread):
      img_req = urllib2.Request(abs_img_url, headers=self.headers)
      img_data = urllib2.urlopen(img_req).read() 
      img_name = filter(str.isalnum,str(abs_img_url))
-     img_path = saved_page_dir + '/' + img_name
+     img_path = self.saved_page_dir + '/' + img_name
      with open(img_path,'w') as f:
        f.write(img_data)
 
@@ -67,14 +68,14 @@ class qFetcherThread(threading.Thread):
  # change this to only fetch when an internal QueryCache message is received
  def run(self):
 
-   self.url_to_fetch = qUtils.recv_message(qUtils.CACHE_PORT)
+   #self.url_to_fetch = qUtils.recv_message(qUtils.FETCH_PORT)
    print 'cache request for url: ' + self.url_to_fetch
 
-   saved_page_dir = 'cache/' + filter(str.isalnum, str(self.url_to_fetch))
+   self.saved_page_dir = 'cache/' + filter(str.isalnum, str(self.url_to_fetch))
    try:
-     os.mkdir(saved_page_dir)
+     os.mkdir(self.saved_page_dir)
    except OSError as exc:
-     if exc.errno == errno.EEXIST and os.path.isdir(saved_page_dir):
+     if exc.errno == errno.EEXIST and os.path.isdir(self.saved_page_dir):
        pass
      else:
        raise
@@ -86,17 +87,17 @@ class qFetcherThread(threading.Thread):
    self.css = self.soup.find_all('link', rel="stylesheet")
    self.js = self.soup.find_all('script', src=re.compile(".*"))
 
-   with open(saved_page_dir + '/index.html','w') as f:
+   with open(self.saved_page_dir + '/index.html','w') as f:
      f.write(self.mainpage)
 
    #self.fetch_images()
    #self.fetch_css_and_js()
    #self.rewrite_links()
 
-   print 'sending the cache a local file at ' + saved_page_dir + '/index.html'
-   qUtils.send_message(saved_page_dir+'/index.html', qUtils.CACHE_PORT)
+   print 'sending the cache a local file at ' + self.saved_page_dir + '/index.html'
+   #qUtils.send_message(self.saved_page_dir+'/index.html', qUtils.CACHE_PORT)
 
-
+"""
 class qFetcherCache(threading.Thread):
  def __init__(self,threadID,request):
   threading.Thread.__init__(self)
@@ -110,6 +111,7 @@ class qFetcherCache(threading.Thread):
    qUtils.send_message(self.request,qUtils.CACHE_PORT)
    print 'SEND TO CACHE'
    state = True
+"""
 
 if __name__=='__main__':
   while True : 
@@ -120,19 +122,20 @@ if __name__=='__main__':
     #----------------------------------ABBASSE-------#
     state = False
     data = ' '
-    while True :
-      print 'LISTEN CACHE'
-      data = qUtils.recv_message(qUtils.FETCH_PORT)
-      if data != 'END' and data != "!KILLPROXY":
-        print 'DATA %s'%data
-        #pThread = qFetcherCache(5,'/cache/httpwwwwebsitecom/index.html')
-        #pThread.start()
+   # while True :
+    print 'LISTEN CACHE'
+    data = qUtils.recv_message(qUtils.FETCH_PORT)
+    if data == "!KILLPROXY":
+      break
+    pThread = qFetcherThread(5,data)
+    pThread.start()
         #pThread.join()
         #while state != True :
         #  print 'wait'
         #state = False
-        time.sleep(3)
-        qUtils.send_message('/cache/httpwwwwebsitecom/index.html',qUtils.CACHE_PORT)
-      else: break
-    if data == "!KILLPROXY" : break 
+    time.sleep(1)
+    pThread.join()
+    qUtils.send_message(pThread.saved_page_dir + '/index.html', qUtils.CACHE_PORT)
+      #else: break
+   # if data == "!KILLPROXY" : break 
 
