@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import errno
 import socket
+import thread
 import threading
 import urllib2
 import os
@@ -42,18 +43,21 @@ class qFetcherThread(threading.Thread):
 
  def fetch_images(self):
    for link in self.imgs:
-     img_url = link.get('src')
-     if img_url.startswith('/'):
-       abs_img_url = self.url_to_fetch + img_url
-     else:
-       abs_img_url = img_url
+     thread.start_new_thread(self.fetch_image,(link,))
 
-     img_req = urllib2.Request(abs_img_url, headers=self.headers)
-     img_data = urllib2.urlopen(img_req).read() 
-     img_name = filter(str.isalnum,str(abs_img_url))
-     img_path = self.saved_page_dir + '/' + img_name
-     with open(img_path,'w') as f:
-       f.write(img_data)
+ def fetch_image(self,link):
+   img_url = link.get('src')
+   if img_url.startswith('/'):
+     abs_img_url = self.url_to_fetch + img_url
+   else:
+     abs_img_url = img_url
+   print '-------------------->' + abs_img_url
+   img_req = urllib2.Request(abs_img_url, headers=self.headers)
+   img_data = urllib2.urlopen(img_req).read() 
+   img_name = filter(str.isalnum,str(abs_img_url))
+   img_path = self.saved_page_dir + '/' + img_name
+   with open(img_path,'w') as f:
+     f.write(img_data)
 
  #replace internal urls to relative file paths in index.html
  def rewrite_links(self):
@@ -90,7 +94,7 @@ class qFetcherThread(threading.Thread):
    with open(self.saved_page_dir + '/index.html','w') as f:
      f.write(self.mainpage)
 
-   #self.fetch_images()
+   self.fetch_images()
    #self.fetch_css_and_js()
    #self.rewrite_links()
 
