@@ -49,12 +49,12 @@ class qProxyThread(threading.Thread):
    while True:
      conn,addr = s.accept()
      request = conn.recv(8192)
-
-     #print request
+     print request
 
      # this is the intended way to shut down the proxy thread,
      # the manager will connect and send a !KILLPROXY message
      if request.startswith("!KILLPROXY"):
+       qUtils.send_message("!KILLPROXY", qUtils.MGR_PORT)
        conn.close()
        return
 
@@ -63,13 +63,17 @@ class qProxyThread(threading.Thread):
      # this is just temporary workaround to kill the program from the browser
      # until the manager can send real !KILLPROXY commands
      if "KILLPROXY" in search_query:
+       qUtils.send_message("!KILLPROXY", qUtils.MGR_PORT)
        conn.close()
        return
 
      search_results = self.execute_search(search_query) 
-     url_list = self.parse_results_for_urls(search_results)
-
-     print 'TOOOOTTTTOO %s'%url_list
+     url_list_tmp = self.parse_results_for_urls(search_results)
+     url_list = []
+     for i in range (0,len(url_list_tmp)) : 
+     	if i == 10 : break
+	url_list.append(url_list_tmp[i])
+     print 'LIST %s'%url_list
   
      senddata = qUtils.build_standard_response()
      conn.sendall(senddata)

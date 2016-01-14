@@ -5,6 +5,8 @@ import threading
 import urllib2
 import os
 import re
+from qUtils import qUtils 
+import time 
 
 #gathers objects from the web
 class qFetcherThread(threading.Thread):
@@ -94,11 +96,43 @@ class qFetcherThread(threading.Thread):
    print 'sending the cache a local file at ' + saved_page_dir + '/index.html'
    qUtils.send_message(saved_page_dir+'/index.html', qUtils.CACHE_PORT)
 
-if __name__=='__main__':
-  qThread = qFetcherThread(2,"http://www.website.com/")
-  qThread.start()
-  qThread.join()
-  #print qThread.webdata
-   
 
+class qFetcherCache(threading.Thread):
+ def __init__(self,threadID,request):
+  threading.Thread.__init__(self)
+  self.threadID = threadID
+  self.request = request
+  global state
+
+  def run(self):
+   print 'I am here'
+   print self.request
+   qUtils.send_message(self.request,qUtils.CACHE_PORT)
+   print 'SEND TO CACHE'
+   state = True
+
+if __name__=='__main__':
+  while True : 
+    #qThread = qFetcherThread(2,"http://www.website.com/")
+    #qThread.start()
+    #qThread.join()
+    #print qThread.webdata
+    #----------------------------------ABBASSE-------#
+    state = False
+    data = ' '
+    while True :
+      print 'LISTEN CACHE'
+      data = qUtils.recv_message(qUtils.FETCH_PORT)
+      if data != 'END' and data != "!KILLPROXY":
+        print 'DATA %s'%data
+        #pThread = qFetcherCache(5,'/cache/httpwwwwebsitecom/index.html')
+        #pThread.start()
+        #pThread.join()
+        #while state != True :
+        #  print 'wait'
+        #state = False
+        time.sleep(3)
+        qUtils.send_message('/cache/httpwwwwebsitecom/index.html',qUtils.CACHE_PORT)
+      else: break
+    if data == "!KILLPROXY" : break 
 

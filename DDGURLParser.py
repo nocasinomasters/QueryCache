@@ -12,7 +12,7 @@ class DDGURLParser(HTMLParser.HTMLParser):
       for name, value in attributes:
         if name == 'href' and value.startswith('http'):
           self.data.append(value)
-
+	
   def handle_endtag(self, tag):
     pass
 
