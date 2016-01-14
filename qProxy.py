@@ -1,10 +1,12 @@
-from DDGURLParser import DDGURLParser
+#from DDGURLParser import DDGURLParser
+from bs4 import BeautifulSoup
 import urllib
 import urllib2
 import socket
 import threading
 from qUtils import qUtils
 import cPickle
+
 class qProxyThread(threading.Thread):
 
  def __init__(self, threadID):
@@ -37,11 +39,16 @@ class qProxyThread(threading.Thread):
 
  @staticmethod
  def parse_results_for_urls(results):
-   p = DDGURLParser()
-   p.feed(results)
-   p.close()
-   #print p.data
-   return  [x.strip() for x in p.data ]
+   soup = BeautifulSoup(results,'html.parser')
+   links = list(set([ x.get('href') for x in soup.findAll('a') ]))
+#   print links
+   external_links =  [x for x in links if str(x).startswith('http')]
+   return external_links
+#   p = DDGURLParser()
+#   p.feed(results)
+#   p.close()
+#   #print p.data
+#   return  [x.strip() for x in p.data ]
 
  def run(self):
    print 'starting proxy server thread'
