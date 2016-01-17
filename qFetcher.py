@@ -107,7 +107,7 @@ class qFetcherThread(threading.Thread):
    with open(self.saved_page_dir + '/index.html','w') as f:
      f.write(self.mainpage)
 
-   self.fetch_images()
+   #self.fetch_images()
    #self.fetch_css_and_js()
    #self.rewrite_links()
 

@@ -74,9 +74,12 @@ class qUtils():
       raise ValueError('port %r is out of range, choose 7777-7780')
 
   @staticmethod
-  def build_response(version,status_code,resp_phrase,content_type,html_file):
-    with open(html_file) as f:
-      content = f.read()
+  def build_standard_header(content):
+    version = "HTTP/1.0"
+    status_code = "200"
+    resp_phrase = "OK"
+    content_type = "text/html"
+    
 
     content_len=str(len(content))
     date = formatdate(timeval=None, localtime=False, usegmt=True)
@@ -87,13 +90,28 @@ class qUtils():
                      "Content-Type:" + content_type + CRETURN + \
                      "Content-Length:" + content_len + CRETURN + \
                      CRETURN + \
-                     CRETURN + \
-                     content
+                     CRETURN
+
     return response
 
   @staticmethod
-  def build_standard_response():
-    return qUtils.build_response("HTTP/1.0","200","OK","text/html","index.html")
+  def build_response(html_file,url_file_map):
+    with open(html_file) as f:
+      content = f.read()
+
+    if url_file_map != []:
+      content = qUtils.add_some_stuff(content, url_file_map)
+
+    return qUtils.build_standard_header(content) + content
+
+  @staticmethod
+  def add_some_stuff(content, url_file_map):
+    print 'big cntent 888888888888888' + content
+    print 'more bs' + str(url_file_map)
+
+  @staticmethod
+  def build_standard_response(url_file_map):
+    return qUtils.build_response("index.html",url_file_map)
 
   @staticmethod
   def build_http_request(url):

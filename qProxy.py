@@ -22,6 +22,7 @@ class qProxyManager(threading.Thread):
    self.threadID = threadID
    self.search_query= query
    self.threadLock = threadLock
+   self.url_results = []
 
  @staticmethod
  def execute_search(query):
@@ -65,6 +66,7 @@ class qProxyManager(threading.Thread):
      print 'SEND to MGR'
      data = cPickle.loads(qUtils.recv_message(qUtils.PROX_PORT))
      print 'RECV %s'%data
+     self.url_results = data
      self.threadLock.release()
 
 if __name__ == '__main__':
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     print request
     search_query = qProxyManager.parse_request_for_query(request)
     print 'QUERY %s'%search_query
-    senddata = qUtils.build_standard_response()
+    senddata = qUtils.build_standard_response([])
     conn.sendall(senddata)  
 
     if "KILLPROXY" in search_query:
@@ -87,5 +89,7 @@ if __name__ == '__main__':
 
     pThread = qProxyManager(1,search_query,threadLock)
     pThread.start()
-    ###pThread.join()
+    #pThread.join()
+    if pThread.url_results != []:
+      conn.sendall(qUtils.build_standard_response(pThread.url_results))
     conn.close()
