@@ -88,4 +88,4 @@ if __name__ == '__main__':
     pThread = qProxyManager(1,search_query,threadLock)
     pThread.start()
     ###pThread.join()
-  conn.close()
+    conn.close()
