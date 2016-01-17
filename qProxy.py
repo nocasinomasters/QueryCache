@@ -8,6 +8,13 @@ from qUtils import qUtils
 import cPickle
 import time
 
+"""
+qProxy.py
+
+The interface between QueryCache and the web. Interacts with
+the browser to translate search queries into cached results.
+"""
+
 class qProxyManager(threading.Thread):
 
  def __init__(self, threadID,query, threadLock):
@@ -15,6 +22,7 @@ class qProxyManager(threading.Thread):
    self.threadID = threadID
    self.search_query= query
    self.threadLock = threadLock
+
  @staticmethod
  def execute_search(query):
    #only ddg has non-js for now
@@ -31,6 +39,14 @@ class qProxyManager(threading.Thread):
    external_links =  [x for x in links if str(x).startswith('http')]
    return external_links
 
+ @staticmethod
+ def parse_request_for_query(request):      # GET /?query=xxx HTTP/1.1\r\n Host: xxx User-Agent: xxx...
+   request_lines = request.splitlines()     #["GET /?query=xxx HTTP/1.1", "Host: xxx", "User-Agent: xxx",...]
+   req_resource = request_lines[0]          #"GET /?query=xxx HTTP/1.1"
+   req_query = req_resource.split(' ')[1]     #/?query=xxx
+   search_query = req_query[len("/?query="):] #xxx
+   return search_query
+
  def run(self):
    print 'SECOND Thread'
    print 'QUERY 2 %s' %self.search_query
@@ -42,6 +58,7 @@ class qProxyManager(threading.Thread):
      url_list.append(url_list_tmp[i])
    print 'LIST %s'%url_list
 
+#using a lock here allows multiple requests to be serviced
    if url_list != [] :
      self.threadLock.acquire()
      qUtils.send_message(cPickle.dumps(url_list),qUtils.MGR_PORT)
@@ -54,18 +71,12 @@ if __name__ == '__main__':
   threadLock = threading.Lock()
   search_query = ' '
   s = qUtils.open_listener(qUtils.BROWSER_PORT)
-  def parse_request_for_query(request):      # GET /?query=xxx HTTP/1.1\r\n Host: xxx User-Agent: xxx...
-    request_lines = request.splitlines()     #["GET /?query=xxx HTTP/1.1", "Host: xxx", "User-Agent: xxx",...]
-    req_resource = request_lines[0]          #"GET /?query=xxx HTTP/1.1"
-    req_query = req_resource.split(' ')[1]     #/?query=xxx
-    search_query = req_query[len("/?query="):] #xxx
-    return search_query
   print 'starting proxy '
   while True:  
     conn,addr = s.accept()
     request = conn.recv(8192)
     print request
-    search_query = parse_request_for_query(request)
+    search_query = qProxyManager.parse_request_for_query(request)
     print 'QUERY %s'%search_query
     senddata = qUtils.build_standard_response()
     conn.sendall(senddata)  

@@ -1,8 +1,11 @@
 from email.utils import formatdate
 import socket
 
+"""
+qUtils.py
 
-#for helpers that don't belong anywhere
+for helpers that don't belong anywhere else
+"""
 
 class qUtils():
 
